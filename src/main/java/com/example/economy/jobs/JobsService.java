@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -26,6 +28,14 @@ public class JobsService {
 
     public void reload(FileConfiguration config) {
         this.config = config;
+    }
+
+    public List<String> availableJobs() {
+        ConfigurationSection section = config.getConfigurationSection("jobs");
+        if (section == null) {
+            return Collections.emptyList();
+        }
+        return List.copyOf(section.getKeys(false));
     }
 
     public String getSelectedJob(UUID playerUuid) throws SQLException {
