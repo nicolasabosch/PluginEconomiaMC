@@ -1,0 +1,46 @@
+currency:
+  symbol: "$"
+  starting-balance: 0.0
+  max-balance: 1000000000.0
+  history-default-limit: 10
+  history-max-limit: 50
+
+sell-prices:
+  DIAMOND: 100.0
+  IRON_INGOT: 15.0
+  GOLD_INGOT: 20.0
+  COBBLESTONE: 0.2
+
+shop:
+  gui-title: "Player Marketplace"
+  page-size: 45
+  tax-percent: 5.0
+  listing-expiry-days: 7
+
+baltop:
+  page-size: 10
+
+lottery:
+  enabled: true
+  draw-interval-minutes: 60
+  ticket-price: 100.0
+
+jobs:
+  Miner:
+    materials:
+      DIAMOND_ORE: 20.0
+      IRON_ORE: 7.0
+  Lumberjack:
+    materials:
+      OAK_LOG: 2.5
+      BIRCH_LOG: 2.5
+  Farmer:
+    materials:
+      WHEAT: 1.2
+      CARROT: 1.2
+  Hunter:
+    mobs:
+      ZOMBIE: 2.0
+      SKELETON: 2.5
+  Fisher:
+    fish-catch: 5.0

@@ -1,0 +1,38 @@
+name: FriendsEconomy
+version: ${project.version}
+main: com.example.economy.EconomyPlugin
+api-version: "1.21"
+
+commands:
+  balance:
+    description: Show your balance
+    usage: /balance
+  pay:
+    description: Send money to another player
+    usage: /pay <player> <amount>
+  sell:
+    description: Open quick sell GUI
+    usage: /sell
+  shop:
+    description: Open marketplace
+    usage: /shop [page|search|list|cancel]
+  history:
+    description: Show your latest transactions
+    usage: /history [count]
+  baltop:
+    description: Show richest players
+    usage: /baltop [page]
+  lottery:
+    description: Lottery commands
+    usage: /lottery buy <amount>
+  jobs:
+    description: Jobs commands
+    usage: /jobs [list|select]
+  eco:
+    description: Economy admin commands
+    usage: /eco <give|take|set|reset|resetall|reload>
+    permission: friendseconomy.admin
+
+permissions:
+  friendseconomy.admin:
+    default: op
