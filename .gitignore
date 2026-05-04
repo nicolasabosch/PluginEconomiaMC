@@ -1,0 +1,25 @@
+# Maven build output
+/target/
+
+# Local tools/downloads used only on this machine
+/.tools/
+
+# IDE/editor files
+/.idea/
+/.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Runtime and logs
+*.log
+
+# Java bytecode/archives (except source jars produced deliberately)
+*.class
+
+# Temp files
+*.tmp
+*.swp
+*.swo
