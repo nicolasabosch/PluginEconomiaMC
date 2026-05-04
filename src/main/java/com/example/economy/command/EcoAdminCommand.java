@@ -6,17 +6,24 @@ import com.example.economy.storage.DatabaseManager;
 import com.example.economy.util.AuditLogger;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
-public class EcoAdminCommand implements CommandExecutor {
+public class EcoAdminCommand implements TabExecutor {
     private final EconomyService economyService;
     private final DatabaseManager databaseManager;
     private final AuditLogger auditLogger;
@@ -34,6 +41,10 @@ public class EcoAdminCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("friendseconomy.admin")) {
             sender.sendMessage("No permission.");
+            return true;
+        }
+        if (args.length == 0 || (args.length == 1 && args[0].equalsIgnoreCase("help"))) {
+            sendEcoSuggestions(sender);
             return true;
         }
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
@@ -121,6 +132,27 @@ public class EcoAdminCommand implements CommandExecutor {
         return true;
     }
 
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            return filterPrefix(List.of("give", "take", "set", "reset", "resetall", "reload", "confirm", "help"), args[0]);
+        }
+        if (args.length == 2 && List.of("give", "take", "set", "reset").contains(args[0].toLowerCase(Locale.ROOT))) {
+            List<String> names = new ArrayList<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                names.add(player.getName());
+            }
+            return filterPrefix(names, args[1]);
+        }
+        if (args.length == 3 && List.of("give", "take", "set").contains(args[0].toLowerCase(Locale.ROOT))) {
+            return filterPrefix(List.of("100", "1000", "10000"), args[2]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("resetall")) {
+            return filterPrefix(List.of("confirm"), args[1]);
+        }
+        return Collections.emptyList();
+    }
+
     private boolean executeResetAll(CommandSender sender) {
         try (PreparedStatement ps = databaseManager.connection().prepareStatement("UPDATE balances SET balance = 0");
                 PreparedStatement tr = databaseManager.connection().prepareStatement(
@@ -133,5 +165,36 @@ public class EcoAdminCommand implements CommandExecutor {
             sender.sendMessage("Resetall failed.");
         }
         return true;
+    }
+
+    private List<String> filterPrefix(List<String> options, String partial) {
+        String lc = partial.toLowerCase(Locale.ROOT);
+        List<String> filtered = new ArrayList<>();
+        for (String option : options) {
+            if (option.toLowerCase(Locale.ROOT).startsWith(lc)) {
+                filtered.add(option);
+            }
+        }
+        return filtered;
+    }
+
+    private void sendEcoSuggestions(CommandSender sender) {
+        sender.sendMessage("Eco admin options:");
+        sendSuggestion(sender, "/eco give <player> 100");
+        sendSuggestion(sender, "/eco take <player> 100");
+        sendSuggestion(sender, "/eco set <player> 1000");
+        sendSuggestion(sender, "/eco reset <player>");
+        sendSuggestion(sender, "/eco resetall");
+        sendSuggestion(sender, "/eco reload");
+    }
+
+    private void sendSuggestion(CommandSender sender, String command) {
+        if (sender instanceof Player player) {
+            player.sendMessage(
+                    Component.text("- " + command, NamedTextColor.GOLD)
+                            .clickEvent(ClickEvent.suggestCommand(command)));
+            return;
+        }
+        sender.sendMessage("- " + command);
     }
 }

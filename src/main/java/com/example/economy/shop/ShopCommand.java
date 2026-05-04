@@ -3,15 +3,21 @@ package com.example.economy.shop;
 import com.example.economy.util.MoneyFormat;
 import com.example.economy.util.PluginConfig;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,7 +26,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-public class ShopCommand implements CommandExecutor, Listener {
+public class ShopCommand implements TabExecutor, Listener {
     private final MarketplaceService marketplaceService;
     private final PluginConfig pluginConfig;
     private final Map<UUID, ListingContext> current = new HashMap<>();
@@ -45,6 +51,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                 }
                 if (args.length < 2) {
                     player.sendMessage("Usage: /shop list <price>");
+                    sendShopSuggestions(player);
                     return true;
                 }
                 double price;
@@ -91,12 +98,17 @@ public class ShopCommand implements CommandExecutor, Listener {
                 player.sendMessage("Listing cancelled and returned.");
                 return true;
             }
+            if (args.length > 0 && args[0].equalsIgnoreCase("help")) {
+                sendShopSuggestions(player);
+                return true;
+            }
             String search = "";
             int page = 1;
             if (args.length > 0 && args[0].equalsIgnoreCase("search")) {
                 search = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
                 if (search.isBlank()) {
                     player.sendMessage("Usage: /shop search <text>");
+                    sendShopSuggestions(player);
                     return true;
                 }
             } else if (args.length > 0) {
@@ -112,6 +124,23 @@ public class ShopCommand implements CommandExecutor, Listener {
             player.sendMessage("Shop operation failed.");
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            return filterPrefix(List.of("list", "cancel", "search", "help"), args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("cancel")) {
+            if (sender instanceof Player player) {
+                try {
+                    return filterPrefix(playerListingIds(player), args[1]);
+                } catch (SQLException ignored) {
+                    return Collections.emptyList();
+                }
+            }
+        }
+        return Collections.emptyList();
     }
 
     private void openPage(Player player, int page, String search) throws SQLException {
@@ -175,5 +204,42 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private record ListingContext(int page, String search, Map<Integer, Long> slotToListingId) {
+    }
+
+    private List<String> filterPrefix(List<String> options, String partial) {
+        String lc = partial.toLowerCase(Locale.ROOT);
+        List<String> filtered = new ArrayList<>();
+        for (String option : options) {
+            if (option.toLowerCase(Locale.ROOT).startsWith(lc)) {
+                filtered.add(option);
+            }
+        }
+        return filtered;
+    }
+
+    private List<String> playerListingIds(Player player) throws SQLException {
+        List<String> ids = new ArrayList<>();
+        List<Listing> page = marketplaceService.listPage(1, "");
+        for (Listing listing : page) {
+            if (listing.sellerUuid().equals(player.getUniqueId())) {
+                ids.add(String.valueOf(listing.id()));
+            }
+        }
+        return ids;
+    }
+
+    private void sendShopSuggestions(Player player) {
+        player.sendMessage("Shop options (click to autocomplete):");
+        sendCommandSuggestion(player, "/shop");
+        sendCommandSuggestion(player, "/shop list 100");
+        sendCommandSuggestion(player, "/shop cancel <id>");
+        sendCommandSuggestion(player, "/shop search diamond");
+        sendCommandSuggestion(player, "/shop 2");
+    }
+
+    private void sendCommandSuggestion(Player player, String command) {
+        player.sendMessage(
+                Component.text("- " + command, NamedTextColor.AQUA)
+                        .clickEvent(ClickEvent.suggestCommand(command)));
     }
 }
