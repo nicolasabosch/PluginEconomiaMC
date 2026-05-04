@@ -6,6 +6,8 @@ Plugin de economia para servidores Paper con:
 - marketplace entre jugadores (`/shop`)
 - historial, ranking, loteria, jobs y comandos admin
 
+> Nuevo y corto: revisa `QUICKSTART.md` para instalar y probar con 2 jugadores en 10 minutos.
+
 ## 1) Requisitos
 
 - Java 21
